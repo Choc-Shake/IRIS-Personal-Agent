@@ -1,0 +1,52 @@
+import { Bot } from 'grammy';
+import { generateResponse } from './llm.js';
+
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.warn('TELEGRAM_BOT_TOKEN is not set in .env. Bot will not start.');
+}
+
+if (!process.env.TELEGRAM_USER_ID) {
+  console.warn('TELEGRAM_USER_ID is not set in .env. Whitelist will not work.');
+}
+
+const ALLOWED_USER_ID = process.env.TELEGRAM_USER_ID ? parseInt(process.env.TELEGRAM_USER_ID, 10) : 0;
+
+export const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN || 'dummy_token');
+
+export async function startBot() {
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    console.log('Skipping bot start due to missing TELEGRAM_BOT_TOKEN');
+    return;
+  }
+
+  // Middleware for User ID Whitelist
+  bot.use(async (ctx, next) => {
+    if (ctx.from?.id !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized access attempt from user ID: ${ctx.from?.id}`);
+      return; // Silently ignore
+    }
+    await next();
+  });
+
+  bot.command('start', (ctx) => {
+    ctx.reply('Gravity Claw initialized. Awaiting input.');
+  });
+
+  bot.on('message:text', async (ctx) => {
+    const userMessage = ctx.message.text;
+    
+    // Send a typing indicator
+    await ctx.replyWithChatAction('typing');
+
+    try {
+      const response = await generateResponse(userMessage);
+      await ctx.reply(response);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      await ctx.reply('An error occurred while processing your request.');
+    }
+  });
+
+  console.log('Starting Gravity Claw (Long Polling)...');
+  await bot.start();
+}

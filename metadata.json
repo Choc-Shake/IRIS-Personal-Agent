@@ -1,0 +1,5 @@
+{
+  "name": "Gravity Claw",
+  "description": "A personal AI agent inspired by OpenClaw, running on Telegram with local-first principles.",
+  "requestFramePermissions": []
+}
