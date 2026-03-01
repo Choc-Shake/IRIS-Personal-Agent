@@ -14,7 +14,7 @@ const ollama = new OpenAI({
   apiKey: 'ollama', // Required by SDK but ignored by Ollama
 });
 
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma3:12';
 const CLOUD_MODEL = 'google/gemini-2.5-flash:free'; // Powerful, free, supports tools
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
@@ -34,7 +34,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 
 function getCurrentTime() {
   return new Date().toLocaleString('en-US', { 
-    timeZone: 'America/Los_Angeles', 
+    timeZone: process.env.TIMEZONE || 'America/Edmonton', 
     dateStyle: 'full', 
     timeStyle: 'long' 
   });
