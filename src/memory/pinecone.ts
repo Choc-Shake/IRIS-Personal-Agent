@@ -21,25 +21,26 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 export async function upsertSemanticMemory(text: string, metadata: any = {}) {
-  if (!process.env.PINECONE_API_KEY || !text.trim()) return;
+  if (!process.env.PINECONE_API_KEY) return;
   try {
     const index = pc.index(indexName);
     const embedding = await getEmbedding(text);
     const id = `mem_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     
-    // @ts-ignore - Bypassing strict type checking to support multiple Pinecone SDK versions
-    await index.upsert([{
-      id,
-      values: embedding,
-      metadata: { text, timestamp: new Date().toISOString(), ...metadata }
-    }]);
+    await index.upsert({
+      records: [{
+        id,
+        values: embedding,
+        metadata: { text, timestamp: new Date().toISOString(), ...metadata }
+      }]
+    });
   } catch (e) {
     console.error('Pinecone upsert error (ensure index exists):', e);
   }
 }
 
 export async function searchSemanticMemory(query: string, topK: number = 3): Promise<string[]> {
-  if (!process.env.PINECONE_API_KEY || !query.trim()) return [];
+  if (!process.env.PINECONE_API_KEY) return [];
   try {
     const index = pc.index(indexName);
     const queryEmbedding = await getEmbedding(query);
