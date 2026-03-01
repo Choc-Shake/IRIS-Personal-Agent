@@ -27,13 +27,11 @@ export async function upsertSemanticMemory(text: string, metadata: any = {}) {
     const embedding = await getEmbedding(text);
     const id = `mem_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     
-    await index.upsert({
-      records: [{
-        id,
-        values: embedding,
-        metadata: { text, timestamp: new Date().toISOString(), ...metadata }
-      }]
-    });
+    await index.upsert([{
+      id,
+      values: embedding,
+      metadata: { text, timestamp: new Date().toISOString(), ...metadata }
+    }] as any);
   } catch (e) {
     console.error('Pinecone upsert error (ensure index exists):', e);
   }
