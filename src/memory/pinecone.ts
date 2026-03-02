@@ -2,7 +2,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
 
 const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY || '' });
-const indexName = 'gravity-claw';
+const indexName = 'iris';
 
 // We use OpenRouter for embeddings too, or fallback to a free provider if needed.
 // OpenRouter supports text-embedding-3-small via OpenAI routing.
