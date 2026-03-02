@@ -6,6 +6,45 @@ import path from 'path';
 export const mcpClients: Record<string, Client> = {};
 export const mcpServerConfigs: Record<string, any> = {};
 
+// Local LLMs (like Llama 3.1/Qwen) often fail when given complex JSON schemas (like anyOf, not, etc.)
+// This function simplifies the schema to basic types so the LLM can understand it.
+function simplifySchema(schema: any): any {
+  if (!schema || typeof schema !== 'object') return schema;
+
+  if (Array.isArray(schema)) {
+    return schema.map(simplifySchema);
+  }
+
+  const simplified = { ...schema };
+
+  if (simplified.anyOf || simplified.allOf || simplified.oneOf) {
+    delete simplified.anyOf;
+    delete simplified.allOf;
+    delete simplified.oneOf;
+    
+    // If it's an array type, keep it as array, otherwise default to string
+    if (!simplified.type) {
+      simplified.type = 'string';
+    }
+  }
+
+  if (simplified.not) {
+    delete simplified.not;
+  }
+
+  if (simplified.properties) {
+    for (const key of Object.keys(simplified.properties)) {
+      simplified.properties[key] = simplifySchema(simplified.properties[key]);
+    }
+  }
+
+  if (simplified.items) {
+    simplified.items = simplifySchema(simplified.items);
+  }
+
+  return simplified;
+}
+
 export function loadMCPConfigs() {
   const configPath = path.join(process.cwd(), 'mcp-servers.json');
   if (fs.existsSync(configPath)) {
@@ -38,7 +77,7 @@ export async function startMCPServer(serverName: string) {
     name: `iris-client-${serverName}`,
     version: "1.0.0"
   }, {
-    capabilities: { tools: {} }
+    capabilities: {}
   });
 
   await client.connect(transport);
@@ -65,7 +104,7 @@ export async function getAllLoadedMCPTools() {
           function: {
             name: `${serverName}__${tool.name}`,
             description: tool.description || `Tool ${tool.name} from ${serverName}`,
-            parameters: tool.inputSchema
+            parameters: simplifySchema(tool.inputSchema)
           }
         });
       }

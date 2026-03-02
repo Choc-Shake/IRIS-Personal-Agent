@@ -104,10 +104,12 @@ ${memoryContext}`;
       requestPayload.tool_choice = 'auto';
     }
 
+    console.log(`[DEBUG] Iteration ${iteration}. Sending ${allTools.length} tools to Ollama.`);
     // Call Ollama
     const response = await openai.chat.completions.create(requestPayload);
 
     const responseMessage = response.choices[0].message;
+    console.log(`[DEBUG] Ollama response: tool_calls=${responseMessage.tool_calls?.length || 0}, content=${!!responseMessage.content}`);
     messages.push(responseMessage);
 
     // Handle Tool Calls
@@ -124,7 +126,10 @@ ${memoryContext}`;
             const args = JSON.parse(toolCall.function.arguments || '{}');
             try {
               await startMCPServer(args.serverName);
-              toolResult = JSON.stringify({ success: true, message: `Server ${args.serverName} loaded. Its tools are now available.` });
+              toolResult = JSON.stringify({ 
+                success: true, 
+                message: `Server ${args.serverName} loaded successfully. Its tools are now available. You MUST now use these newly available tools to fulfill the user's original request. Do not stop here.` 
+              });
             } catch (err: any) {
               toolResult = JSON.stringify({ error: err.message });
             }
