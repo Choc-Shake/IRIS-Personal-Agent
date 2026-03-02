@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { addMessage, getRecentMessages } from './memory/sqlite.js';
 import { searchSemanticMemory, upsertSemanticMemory } from './memory/pinecone.js';
+import { getAllLoadedMCPTools, callMCPTool, getAvailableMCPServers, startMCPServer } from './mcp.js';
 
 // Initialize Ollama via OpenAI SDK
 const openai = new OpenAI({
@@ -45,7 +46,14 @@ export async function generateResponse(userMessage: string): Promise<string> {
     : '';
 
   // 3. Build message history
-  const systemPrompt = `You are IRIS (Intelligent Response and Insight System), a personal AI agent. You have access to tools. Use them if necessary.${memoryContext}`;
+  const availableServers = getAvailableMCPServers();
+  const serverDescriptions = availableServers.map(s => `- ${s.name}: ${s.description} (Loaded: ${s.isLoaded})`).join('\n');
+
+  const systemPrompt = `You are IRIS (Intelligent Response and Insight System), a personal AI agent. You have access to tools. Use them if necessary.
+You can load additional tool servers if needed for the user's request.
+Available MCP Servers:
+${serverDescriptions}
+${memoryContext}`;
   
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt }
@@ -66,13 +74,38 @@ export async function generateResponse(userMessage: string): Promise<string> {
   while (iteration < MAX_ITERATIONS) {
     iteration++;
 
-    // Call Ollama
-    const response = await openai.chat.completions.create({
-      model: process.env.OLLAMA_MODEL || 'qwen3:14b', // Ensure you pull a tool-calling capable model like qwen3:14b
-      messages: messages,
-      tools: tools,
-      tool_choice: 'auto',
+    // Fetch dynamic MCP tools
+    const mcpTools = await getAllLoadedMCPTools();
+    const allTools = [...tools, ...mcpTools];
+
+    // Add the load_mcp_server tool dynamically
+    allTools.push({
+      type: 'function',
+      function: {
+        name: 'load_mcp_server',
+        description: 'Load an MCP server to access its tools. Do this FIRST if the user asks for something related to an unloaded server.',
+        parameters: {
+          type: 'object',
+          properties: {
+            serverName: { type: 'string', description: 'The name of the server to load' }
+          },
+          required: ['serverName']
+        }
+      }
     });
+
+    const requestPayload: any = {
+      model: process.env.OLLAMA_MODEL || 'qwen3:14b',
+      messages: messages,
+    };
+    
+    if (allTools.length > 0) {
+      requestPayload.tools = allTools;
+      requestPayload.tool_choice = 'auto';
+    }
+
+    // Call Ollama
+    const response = await openai.chat.completions.create(requestPayload);
 
     const responseMessage = response.choices[0].message;
     messages.push(responseMessage);
@@ -82,10 +115,35 @@ export async function generateResponse(userMessage: string): Promise<string> {
       for (const toolCall of responseMessage.tool_calls) {
         let toolResult: string;
         
-        if (toolCall.type === 'function' && toolCall.function.name === 'get_current_time') {
-          toolResult = JSON.stringify({ time: getCurrentTime() });
+        if (toolCall.type === 'function') {
+          const functionName = toolCall.function.name;
+          
+          if (functionName === 'get_current_time') {
+            toolResult = JSON.stringify({ time: getCurrentTime() });
+          } else if (functionName === 'load_mcp_server') {
+            const args = JSON.parse(toolCall.function.arguments || '{}');
+            try {
+              await startMCPServer(args.serverName);
+              toolResult = JSON.stringify({ success: true, message: `Server ${args.serverName} loaded. Its tools are now available.` });
+            } catch (err: any) {
+              toolResult = JSON.stringify({ error: err.message });
+            }
+          } else if (functionName.includes('__')) {
+            // MCP Tool execution
+            const [serverName, actualToolName] = functionName.split('__');
+            try {
+              const args = JSON.parse(toolCall.function.arguments || '{}');
+              const result = await callMCPTool(serverName, actualToolName, args);
+              toolResult = JSON.stringify(result);
+            } catch (err: any) {
+              console.error(`Error calling MCP tool ${functionName}:`, err);
+              toolResult = JSON.stringify({ error: err.message });
+            }
+          } else {
+            toolResult = JSON.stringify({ error: 'Unknown function' });
+          }
         } else {
-          toolResult = JSON.stringify({ error: 'Unknown function' });
+          toolResult = JSON.stringify({ error: 'Unknown tool type' });
         }
 
         // Push the tool response back to the model, matching the tool_call_id

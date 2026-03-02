@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "notebooklm": {
+      "command": "C:\\Users\\dogki\\AppData\\Roaming\\Python\\Python314\\Scripts\\notebooklm-mcp.exe",
+      "args": [],
+      "disabled": true
+    },
+    "pinecone": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pinecone-database/mcp"
+      ],
+      "env": {
+        "PINECONE_API_KEY": "pcsk_4uZoq3_HzPnCfc2Tbf88seXJPJwsBLFJkjdKwANZMUPSJd2LJEX4bpLZgbFfDgY7fZD1AM"
+      },
+      "disabled": true
+    },
+    "zapier": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.zapier.com/api/v1/connect?token=MmU2NWY2ODUtZjU5Zi00YzAyLWJjMTItNDkxZmQ3YzMzZWUzOnU0bHZ3WUFZWTdMbTNnbTIxNnFXSUNtakloaFVwK3FDYXdnZ3owUEc4d3c9"
+      ],
+      "disabled": true
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": true
+    }
+  }
+}

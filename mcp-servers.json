@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "zapier": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.zapier.com/api/v1/connect?token=MmU2NWY2ODUtZjU5Zi00YzAyLWJjMTItNDkxZmQ3YzMzZWUzOnU0bHZ3WUFZWTdMbTNnbTIxNnFXSUNtakloaFVwK3FDYXdnZ3owUEc4d3c9"
+      ],
+      "description": "Zapier integrations. Use this to access Google Calendar, Gmail, and other connected apps."
+    },
+    "notebooklm": {
+      "command": "C:\\Users\\dogki\\AppData\\Roaming\\Python\\Python314\\Scripts\\notebooklm-mcp.exe",
+      "args": [],
+      "description": "Access to Google NotebookLM notebooks and documents. Use this to read or query notebooks."
+    }
+  }
+}
