@@ -2,10 +2,10 @@ import OpenAI from 'openai';
 import { addMessage, getRecentMessages } from './memory/sqlite.js';
 import { searchSemanticMemory, upsertSemanticMemory } from './memory/pinecone.js';
 
-// Initialize OpenRouter via OpenAI SDK
+// Initialize Ollama via OpenAI SDK
 const openai = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1',
+  apiKey: 'ollama', // OpenAI SDK requires an API key, but Ollama ignores it
 });
 
 // Define the get_current_time tool (OpenAI format)
@@ -66,9 +66,9 @@ export async function generateResponse(userMessage: string): Promise<string> {
   while (iteration < MAX_ITERATIONS) {
     iteration++;
 
-    // Call OpenRouter
+    // Call Ollama
     const response = await openai.chat.completions.create({
-      model: 'openai/gpt-4o-mini', // Reliable tool-calling model on OpenRouter
+      model: process.env.OLLAMA_MODEL || 'qwen3:14b', // Ensure you pull a tool-calling capable model like qwen3:14b
       messages: messages,
       tools: tools,
       tool_choice: 'auto',

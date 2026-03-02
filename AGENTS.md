@@ -6,7 +6,7 @@ IRIS (Intelligent Response and Insight System) is a personal AI agent running on
 ## Core Architecture
 - **Language:** TypeScript (Node.js)
 - **Interface:** Telegram Bot API using `grammy` (Long-polling mode)
-- **LLM Provider:** OpenRouter (via `openai` SDK)
+- **LLM Provider:** Local Ollama (via `openai` SDK compatible endpoint)
 - **Memory System:**
   - **Short-term / Exact:** SQLite (local database for recent chat history)
   - **Long-term / Semantic:** Pinecone (Vector database for semantic search)

@@ -6,7 +6,7 @@
 - Set up a TypeScript Node.js project.
 - Integrated the Telegram Bot API using `grammy` with long-polling.
 - Implemented strict security whitelisting to restrict bot access to a single user.
-- Connected to OpenRouter via the OpenAI SDK for LLM responses (using `gpt-4o-mini` for reliable tool calling).
+- Connected to a local Ollama instance via the OpenAI SDK for LLM responses (using `llama3.1` or other tool-capable models).
 - Implemented basic tool calling (e.g., `get_current_time`).
 
 ### Level 2: Dual-Memory System
