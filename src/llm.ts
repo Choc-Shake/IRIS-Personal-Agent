@@ -53,6 +53,11 @@ export async function generateResponse(userMessage: string): Promise<string> {
 You can load additional tool servers if needed for the user's request.
 Available MCP Servers:
 ${serverDescriptions}
+
+CRITICAL RULES FOR TOOLS:
+1. ZAPIER 'instructions' PARAMETER: Every Zapier tool REQUIRES an 'instructions' parameter. You MUST include it. Example: { "instructions": "Find events for tomorrow" }.
+2. CALENDAR ACCESS: You DO have access to Google Calendar via Zapier. Look for tools starting with 'zapier__google_calendar_'.
+3. CONVERSATIONAL RESPONSES: When a tool returns data (like emails or calendar events), read the data and answer the user naturally. DO NOT say "Here is the JSON" or list execution metadata. Act like a human assistant who just looked up the info.
 ${memoryContext}`;
   
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -139,7 +144,12 @@ ${memoryContext}`;
             try {
               const args = JSON.parse(toolCall.function.arguments || '{}');
               const result = await callMCPTool(serverName, actualToolName, args);
-              toolResult = JSON.stringify(result);
+              // MCP tools usually return { content: [{ type: 'text', text: '...' }] }
+              if (result && result.content && Array.isArray(result.content)) {
+                toolResult = result.content.map((c: any) => c.text).join('\n');
+              } else {
+                toolResult = JSON.stringify(result);
+              }
             } catch (err: any) {
               console.error(`Error calling MCP tool ${functionName}:`, err);
               toolResult = JSON.stringify({ error: err.message });
