@@ -9,7 +9,8 @@ IRIS is a sophisticated, deterministic, and highly-efficient AI agentic bot syst
 - 🛠️ **MCP Integration**: Dynamic tool loading and execution via the Model Context Protocol. Supports Zapier, Weather, Context7, and more.
 - 📁 **Memory System**: Persistent exact memory using SQLite (`better-sqlite3`) in **WAL Mode** for lightning-fast, parallel I/O.
 - 📡 **Telegram Interface**: Full-featured Telegram bot with **Real-Time Response Streaming** (watch IRIS type her answers live).
-- 🎤 **Voice Transcription**: Automatic transcription of voice messages for seamless interaction on the go.
+- 🧬 **Local Semantic Memory**: Hybrid RAG architecture using **Ollama** (`nomic-embed-text`) for zero-latency semantic vectors instantly saved and recalled via Pinecone.
+- 🎭 **Personality Management**: Manage IRIS's "Soul" via `.agent/persona.md`. Seamlessly adjust her tone, style, and magnetism in plain markdown.
 - 🧩 **Intent Router**: Sub-millisecond keyword-based routing that filters 65+ MCP tools down to only what's needed, crushing token bloat.
 - 🧠 **Cloud LLM Native**: Optimized for high-performance cloud models via OpenRouter (Gemini, Qwen, etc.).
 - 🛡️ **B.L.A.S.T. Protocols**: Built on a highly-efficient, self-healing architecture:
@@ -26,10 +27,11 @@ IRIS is a sophisticated, deterministic, and highly-efficient AI agentic bot syst
 IRIS follows the **Agentic, Nested, Task-oriented (A.N.T.)** structure:
 
 1.  **Orchestrator (`src/llm.ts`)**: The core execution loop that handles planning, tool selection, and stateful response generation with **Streaming support**.
-2.  **Intent Router (`src/router.ts`)**: A zero-latency pre-flight layer that determines tool requirements before the LLM even starts thinking.
-3.  **MCP Layer (`src/mcp.ts`)**: Manages external server connections and dynamic tool schema injection.
-4.  **Memory Layer (`src/memory/`)**: Handles state persistence across conversations using optimized SQLite WAL journals.
-5.  **UX Layer (`src/ux/`)**: Manages visual feedback, typing indicators, and real-time message editing.
+2.  **Persona Core (`.agent/persona.md`)**: Defines the "Soul" of IRIS—her tone, boundaries, and personality traits.
+3.  **Intent Router (`src/router.ts`)**: A zero-latency pre-flight layer that determines tool requirements before the LLM even starts thinking.
+4.  **MCP Layer (`src/mcp.ts`)**: Manages external server connections and dynamic tool schema injection.
+5.  **Memory Layer (`src/memory/`)**: Dual-layer persistence involving SQLite (Exact) and Pinecone/Ollama (Semantic RAG).
+6.  **UX Layer (`src/ux/`)**: Manages visual feedback, typing indicators, and real-time message editing.
 
 ---
 
@@ -38,6 +40,7 @@ IRIS follows the **Agentic, Nested, Task-oriented (A.N.T.)** structure:
 IRIS is built for speed, with several layers of optimization to ensure instant responses:
 
 - **Database WAL Mode**: Uses SQLite's Write-Ahead Logging to prevent database locks and ensure parallel memory access.
+- **Background RAG Recall**: Automatically performs semantic searches in the background for every query, injecting context into the prompt without requiring LLM tool calls.
 - **Strict Tool Filtering**: Reduces the 65+ tool schema payload down to the bare essentials (or zero for chat), saving seconds of token-processing time.
 - **LLM Timers**: Built-in `[PERF]` metrics to monitor LLM network latency vs. local task processing time.
 - **Response Streaming**: Uses OpenRouter's streaming API to deliver chunks word-by-word, eliminating the perceived wait for long summaries.
@@ -62,6 +65,8 @@ IRIS is built for speed, with several layers of optimization to ensure instant r
 - **NPM** or **PNPM**
 - **Telegram Bot Token** (from @BotFather)
 - **OpenRouter API Key**
+- **Ollama** (Running locally for `nomic-embed-text` embeddings)
+- **Pinecone API Key**
 
 ---
 
@@ -112,7 +117,9 @@ IRIS is built for speed, with several layers of optimization to ensure instant r
 
 ```text
 IRIS/
-├── .agent/              # Agent skills and protocols
+├── .agent/              # Agent skills, protocols, and personality
+│   ├── persona.md       # Manage IRIS's "Soul" (tone/identity)
+│   └── skills/          # MCP skill definitions
 ├── data/                # Memory databases and temporary files
 ├── src/
 │   ├── commands/        # Telegram slash commands

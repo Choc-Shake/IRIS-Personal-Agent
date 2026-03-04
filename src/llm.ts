@@ -2,9 +2,12 @@ import OpenAI from 'openai';
 import { addMessage, getRecentMessages } from './memory/sqlite.js';
 import { getAllLoadedMCPTools, callMCPTool, startMCPServer, mcpClients } from './mcp.js';
 import { getRequiredTools } from './router.js';
+import { upsertSemanticMemory, searchSemanticMemory } from './memory/pinecone.js';
 
 import https from 'https';
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 
 // Helper function to wrap Promises with a timeout
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -37,8 +40,56 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         additionalProperties: false
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'save_semantic_memory',
+      description: 'Save important facts, user preferences, or memories to long-term memory. USE THIS whenever the user asks you to remember something or provides a fact about themselves.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: {
+            type: 'string',
+            description: 'The fact or memory to save (e.g. "The user\'s name is Ishaan" or "Ishaan is working on a new game project")'
+          }
+        },
+        required: ['text'],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_semantic_memory',
+      description: 'Search long-term memory for past facts, preferences, or context. USE THIS whenever you need to recall something the user previously told you.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'The search query to find in memory (e.g. "What is the user\'s name?" or "What project is Ishaan working on?")'
+          }
+        },
+        required: ['query'],
+        additionalProperties: false
+      }
+    }
   }
 ];
+
+function loadPersona(): string {
+  try {
+    const personaPath = path.join(process.cwd(), '.agent', 'persona.md');
+    if (fs.existsSync(personaPath)) {
+      return fs.readFileSync(personaPath, 'utf-8');
+    }
+  } catch (err) {
+    console.error('[PERSONA] Failed to load persona.md, using default.');
+  }
+  return "You are IRIS (Intelligent Response and Insight System), a personal AI agent.";
+}
 
 function getCurrentTime() {
   const tz = process.env.TIMEZONE || 'America/Edmonton';
@@ -79,10 +130,18 @@ export async function generateResponse(userMessage: string, onChunk?: (text: str
     }
   }
 
-  // Pinecone is currently disabled per user request, so memoryContext is empty
-  const memoryContext = '';
+  // Perform an automatic Semantic Memory search for context
+  let memoryContext = '';
+  try {
+    const memoryResults = await searchSemanticMemory(userMessage);
+    if (memoryResults && memoryResults.length > 0) {
+      memoryContext = `\nRELEVANT PAST MEMORIES/CONTEXT ABOUT USER:\n` + memoryResults.map(r => `- ${r}`).join('\n');
+    }
+  } catch (err) {
+    console.log('[DEBUG] Memory search failed or skipped');
+  }
 
-  const systemPrompt = `You are IRIS (Intelligent Response and Insight System), a personal AI agent. 
+  const systemPrompt = `${loadPersona()}
 Today's Date: ${getCurrentTime()}
 
 CRITICAL RULES FOR TOOLS:
@@ -191,6 +250,22 @@ ${memoryContext}`;
             
             if (functionName === 'get_current_time') {
               toolResult = JSON.stringify({ time: getCurrentTime() });
+            } else if (functionName === 'save_semantic_memory') {
+              try {
+                const args = JSON.parse(toolCall.function.arguments || '{}');
+                await upsertSemanticMemory(args.text);
+                toolResult = JSON.stringify({ status: "success", message: `Memory saved: ${args.text}` });
+              } catch (err: any) {
+                toolResult = JSON.stringify({ error: err.message });
+              }
+            } else if (functionName === 'search_semantic_memory') {
+              try {
+                const args = JSON.parse(toolCall.function.arguments || '{}');
+                const results = await searchSemanticMemory(args.query);
+                toolResult = JSON.stringify({ results });
+              } catch (err: any) {
+                toolResult = JSON.stringify({ error: err.message });
+              }
             } else if (functionName.includes('__')) {
               // MCP Tool execution
               const [serverName, actualToolName] = functionName.split('__');
