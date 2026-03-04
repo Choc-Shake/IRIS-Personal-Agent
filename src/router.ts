@@ -44,3 +44,51 @@ export function loadSkills() {
   
   return availableSkills;
 }
+
+/**
+ * Lightning-fast Intent Router: Scans user message for keywords to determine which MCP tools to inject.
+ * Returns an array of prefixes (e.g. ['zapier__gmail', 'notebooklm__']) or [] if no tools are needed.
+ * Returns undefined if we should load all tools (fallback).
+ */
+export function getRequiredTools(userMessage: string): string[] | undefined {
+  const msg = userMessage.toLowerCase();
+  const tools: string[] = [];
+  let intentDetected = false;
+
+  // Calendar Intent
+  if (msg.includes('calendar') || msg.includes('schedule') || msg.includes('meeting') || msg.includes('event')) {
+    tools.push('zapier__google_calendar');
+    intentDetected = true;
+  }
+
+  // Email Intent
+  if (msg.includes('email') || msg.includes('gmail') || msg.includes('inbox') || msg.includes('message')) {
+    tools.push('zapier__gmail');
+    intentDetected = true;
+  }
+
+  // Documentation / Notebook Intent
+  if (msg.includes('notebook') || msg.includes('note') || msg.includes('document')) {
+    tools.push('notebooklm__');
+    intentDetected = true;
+  }
+
+  // Context7 / Technical Docs Intent
+  if (msg.includes('doc') || msg.includes('code') || msg.includes('context')) {
+    tools.push('context7__');
+    intentDetected = true;
+  }
+
+  // Generic Zapier Fallback
+  if (msg.includes('zapier') || msg.includes('zap')) {
+    tools.push('zapier__');
+    intentDetected = true;
+  }
+
+  if (!intentDetected) {
+    // Zero tools needed, pure conversation = instant reply
+    return [];
+  }
+
+  return tools;
+}

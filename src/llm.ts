@@ -1,7 +1,10 @@
 import OpenAI from 'openai';
 import { addMessage, getRecentMessages } from './memory/sqlite.js';
 import { getAllLoadedMCPTools, callMCPTool, startMCPServer, mcpClients } from './mcp.js';
-import { loadSkills } from './router.js';
+import { getRequiredTools } from './router.js';
+
+import https from 'https';
+import http from 'http';
 
 // Helper function to wrap Promises with a timeout
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -46,7 +49,20 @@ function getCurrentTime() {
   });
 }
 
-export async function generateResponse(userMessage: string): Promise<string> {
+export async function generateResponse(userMessage: string, onChunk?: (text: string) => void): Promise<string> {
+  const startTime = Date.now();
+  console.log(`\n[LLM] --- GENERATION STARTED ---`);
+
+  // 0. Pre-Flight Intent Routing
+  const allowedTools = getRequiredTools(userMessage);
+  if (allowedTools && allowedTools.length === 0) {
+    console.log(`[ROUTER] Zero external tools required for this query. Bypassing MCP layer.`);
+  } else if (allowedTools) {
+    console.log(`[ROUTER] Filtering MCP tools to distinct prefixes: ${allowedTools.join(', ')}`);
+  } else {
+    console.log(`[ROUTER] No specific intent detected. Allowing all tools.`);
+  }
+
   // 1. Save user message to exact memory (SQLite)
   addMessage('user', userMessage);
 
@@ -63,22 +79,15 @@ export async function generateResponse(userMessage: string): Promise<string> {
     }
   }
 
-  // 3. Load Skills Context
-  const skills = loadSkills();
-  const skillsList = skills.map(s => `- ${s.name}: ${s.description}`).join('\n');
-
   // Pinecone is currently disabled per user request, so memoryContext is empty
   const memoryContext = '';
 
   const systemPrompt = `You are IRIS (Intelligent Response and Insight System), a personal AI agent. 
 Today's Date: ${getCurrentTime()}
 
-Available Sub-Skills (for your awareness):
-${skillsList}
-
 CRITICAL RULES FOR TOOLS:
-1. ZAPIER 'instructions' PARAMETER: Every Zapier tool REQUIRES an 'instructions' parameter. You MUST include it. Example: { "instructions": "Find events for tomorrow" }.
-2. CONVERSATIONAL RESPONSES: When a tool returns data (like emails or calendar events), read the data and answer the user naturally. DO NOT say "Here is the JSON" or list execution metadata. Act like a human assistant who just looked up the info and reply with a cleanly formatted and aesthetic response.
+1. ZAPIER 'instructions' PARAMETER: Every Zapier tool REQUIRES an 'instructions' parameter. Example: { "instructions": "Find events for tomorrow" }.
+2. CONVERSATIONAL RESPONSES: Read tool data and answer naturally. DO NOT output raw JSON or execution metadata.
 ${memoryContext}`;
   
   // Prepend system prompt to messages
@@ -96,8 +105,11 @@ ${memoryContext}`;
   while (iteration < MAX_ITERATIONS) {
     iteration++;
 
-    // Fetch dynamic MCP tools (all currently loaded servers)
-    const mcpTools = await getAllLoadedMCPTools();
+    // Fetch dynamic MCP tools (filtered by Intent Router)
+    let mcpTools: any[] = [];
+    if (!allowedTools || allowedTools.length > 0) {
+      mcpTools = await getAllLoadedMCPTools(allowedTools);
+    }
     const allTools = [...tools, ...mcpTools];
 
     const requestPayload: any = {
@@ -114,13 +126,55 @@ ${memoryContext}`;
     
     // Call LLM
     try {
-      const response = await withTimeout(
-        openaiClient.chat.completions.create(requestPayload),
+      const llmCallStart = Date.now();
+      const stream: any = await withTimeout(
+        openaiClient.chat.completions.create({
+          ...requestPayload,
+          stream: true
+        }),
         45000,
-        "OpenRouter LLM request timed out after 45 seconds"
+        "OpenRouter LLM network connection timed out"
       );
 
-      const responseMessage = response.choices[0].message;
+      let finalContent = "";
+      const toolCallsMap: Record<number, any> = {};
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.content) {
+          finalContent += delta.content;
+          if (onChunk) onChunk(finalContent);
+        }
+
+        if (delta.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            if (!toolCallsMap[tc.index]) {
+              toolCallsMap[tc.index] = {
+                id: tc.id,
+                type: 'function',
+                function: { name: tc.function?.name || '', arguments: tc.function?.arguments || '' }
+              };
+            } else {
+              if (tc.id) toolCallsMap[tc.index].id = tc.id;
+              if (tc.function?.name) toolCallsMap[tc.index].function.name += tc.function.name;
+              if (tc.function?.arguments) toolCallsMap[tc.index].function.arguments += tc.function.arguments;
+            }
+          }
+        }
+      }
+
+      const llmCallDuration = Date.now() - llmCallStart;
+      console.log(`[PERF] LLM Streaming Call took ${llmCallDuration}ms`);
+
+      const tool_calls = Object.values(toolCallsMap);
+      const responseMessage: any = {
+        role: 'assistant',
+        content: finalContent || null,
+        tool_calls: tool_calls.length > 0 ? tool_calls : undefined
+      };
+
       console.log(`[DEBUG] LLM response: tool_calls=${responseMessage.tool_calls?.length || 0}, content=${!!responseMessage.content}`);
       messages.push({ role: responseMessage.role, content: responseMessage.content, tool_calls: responseMessage.tool_calls } as any);
 
@@ -129,7 +183,7 @@ ${memoryContext}`;
         // Save assistant message with tool calls to SQLite
         addMessage('assistant', responseMessage.content || '', JSON.stringify(responseMessage.tool_calls));
 
-        const toolResponses = await Promise.all(responseMessage.tool_calls.map(async (toolCall) => {
+        const toolResponses = await Promise.all(responseMessage.tool_calls.map(async (toolCall: any) => {
           let toolResult: string;
           
           if (toolCall.type === 'function') {
@@ -195,13 +249,21 @@ ${memoryContext}`;
         // Save assistant response to exact memory (SQLite)
         addMessage('assistant', finalContent);
         
+        const totalDuration = Date.now() - startTime;
+        console.log(`[PERF] Total Generation Time: ${totalDuration}ms`);
+        console.log(`[LLM] --- GENERATION FINISHED ---\n`);
+
         return finalContent;
       }
     } catch (e: any) {
       console.error("[LLM] Error calling OpenRouter:", e.message);
+      const totalDuration = Date.now() - startTime;
+      console.log(`[PERF] Failed after ${totalDuration}ms\n`);
       return `I encountered an error connecting to my core reasoning unit: ${e.message}`;
     }
   }
 
+  const totalDuration = Date.now() - startTime;
+  console.log(`[PERF] Exceeded max iterations after ${totalDuration}ms\n`);
   return "Error: Maximum agent iterations reached.";
 }

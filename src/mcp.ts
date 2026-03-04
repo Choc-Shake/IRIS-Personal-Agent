@@ -160,8 +160,8 @@ export async function getAllLoadedMCPTools(allowedTools?: string[]) {
       for (const tool of response.tools) {
         const fullToolName = `${serverName}__${tool.name}`;
         
-        // If allowedTools is provided, only include tools in that list
-        if (allowedTools && !allowedTools.includes(fullToolName)) {
+        // If allowedTools is provided, only include tools that match by exact name or prefix
+        if (allowedTools && !allowedTools.some(allowed => fullToolName.startsWith(allowed))) {
           continue;
         }
 

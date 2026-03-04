@@ -15,6 +15,10 @@ let db: any;
 function initDb() {
   db = new Database(dbPath);
 
+  // Enable WAL mode for parallel reads and non-blocking writes
+  db.pragma('journal_mode = WAL');
+  db.pragma('synchronous = NORMAL');
+
   // Initialize tables and FTS5 virtual table
   db.exec(`
     CREATE TABLE IF NOT EXISTS messages (

@@ -6,10 +6,11 @@ IRIS is a sophisticated, deterministic, and highly-efficient AI agentic bot syst
 
 ## ✨ Key Features
 
-- 🛠️ **MCP Integration**: Dynamic tool loading and execution via the Model Context Protocol. Supports Zapier, Weather, and more.
-- 📁 **Memory System**: Persistent exact memory using SQLite (`better-sqlite3`) to track conversations and tool outputs.
-- 📡 **Telegram Interface**: Full-featured Telegram bot with support for text and voice messages.
+- 🛠️ **MCP Integration**: Dynamic tool loading and execution via the Model Context Protocol. Supports Zapier, Weather, Context7, and more.
+- 📁 **Memory System**: Persistent exact memory using SQLite (`better-sqlite3`) in **WAL Mode** for lightning-fast, parallel I/O.
+- 📡 **Telegram Interface**: Full-featured Telegram bot with **Real-Time Response Streaming** (watch IRIS type her answers live).
 - 🎤 **Voice Transcription**: Automatic transcription of voice messages for seamless interaction on the go.
+- 🧩 **Intent Router**: Sub-millisecond keyword-based routing that filters 65+ MCP tools down to only what's needed, crushing token bloat.
 - 🧠 **Cloud LLM Native**: Optimized for high-performance cloud models via OpenRouter (Gemini, Qwen, etc.).
 - 🛡️ **B.L.A.S.T. Protocols**: Built on a highly-efficient, self-healing architecture:
   - **B**ehavioral Logic
@@ -24,10 +25,22 @@ IRIS is a sophisticated, deterministic, and highly-efficient AI agentic bot syst
 
 IRIS follows the **Agentic, Nested, Task-oriented (A.N.T.)** structure:
 
-1.  **Orchestrator (`src/llm.ts`)**: The core execution loop that handles planning, tool selection, and response generation.
-2.  **MCP Layer (`src/mcp.ts`)**: Manages external server connections and tool schemas.
-3.  **Memory Layer (`src/memory/`)**: Handles state persistence across conversations.
-4.  **UX Layer (`src/ux/`)**: Manages the interface elements, including typing indicators and formatting.
+1.  **Orchestrator (`src/llm.ts`)**: The core execution loop that handles planning, tool selection, and stateful response generation with **Streaming support**.
+2.  **Intent Router (`src/router.ts`)**: A zero-latency pre-flight layer that determines tool requirements before the LLM even starts thinking.
+3.  **MCP Layer (`src/mcp.ts`)**: Manages external server connections and dynamic tool schema injection.
+4.  **Memory Layer (`src/memory/`)**: Handles state persistence across conversations using optimized SQLite WAL journals.
+5.  **UX Layer (`src/ux/`)**: Manages visual feedback, typing indicators, and real-time message editing.
+
+---
+
+## ⚡ High-Performance Optimizations
+
+IRIS is built for speed, with several layers of optimization to ensure instant responses:
+
+- **Database WAL Mode**: Uses SQLite's Write-Ahead Logging to prevent database locks and ensure parallel memory access.
+- **Strict Tool Filtering**: Reduces the 65+ tool schema payload down to the bare essentials (or zero for chat), saving seconds of token-processing time.
+- **LLM Timers**: Built-in `[PERF]` metrics to monitor LLM network latency vs. local task processing time.
+- **Response Streaming**: Uses OpenRouter's streaming API to deliver chunks word-by-word, eliminating the perceived wait for long summaries.
 
 ---
 

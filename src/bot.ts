@@ -55,9 +55,33 @@ export async function startBot() {
     typing.start();
 
     try {
-      const response = await generateResponse(userMessage);
+      let messageToEdit: any = null;
+      let lastEditTime = 0;
+      
+      const response = await generateResponse(userMessage, async (text) => {
+        const now = Date.now();
+        // Update Telegram every 1.5 seconds if we have text
+        if (now - lastEditTime > 1500 && text.trim().length > 0) {
+           lastEditTime = now;
+           if (!messageToEdit) {
+              typing.stop(); // Stop visual typing once we are sending text
+              messageToEdit = await ctx.reply(text + ' ✍️');
+           } else {
+              try {
+                  await ctx.api.editMessageText(ctx.chat.id, messageToEdit.message_id, text + ' ✍️');
+              } catch(e) { /* Ignore "message is not modified" errors */ }
+           }
+        }
+      });
+      
       typing.stop();
-      await ctx.reply(response);
+      if (messageToEdit) {
+          try {
+              await ctx.api.editMessageText(ctx.chat.id, messageToEdit.message_id, response);
+          } catch(e) {}
+      } else {
+          await ctx.reply(response);
+      }
     } catch (error) {
       typing.stop();
       console.error('Error generating response:', error);
@@ -90,10 +114,32 @@ export async function startBot() {
       // Start continuous typing indicator for LLM response
       const typing = new TypingIndicator(ctx);
       typing.start();
-      const replyText = await generateResponse(text);
-      typing.stop();
+
+      let messageToEdit: any = null;
+      let lastEditTime = 0;
+      const replyText = await generateResponse(text, async (chunkText) => {
+        const now = Date.now();
+        if (now - lastEditTime > 1500 && chunkText.trim().length > 0) {
+           lastEditTime = now;
+           if (!messageToEdit) {
+              typing.stop();
+              messageToEdit = await ctx.reply(chunkText + ' ✍️');
+           } else {
+              try {
+                  await ctx.api.editMessageText(ctx.chat.id, messageToEdit.message_id, chunkText + ' ✍️');
+              } catch(e) {}
+           }
+        }
+      });
       
-      await ctx.reply(replyText);
+      typing.stop();
+      if (messageToEdit) {
+          try {
+              await ctx.api.editMessageText(ctx.chat.id, messageToEdit.message_id, replyText);
+          } catch(e) {}
+      } else {
+          await ctx.reply(replyText);
+      }
       
     } catch (error) {
       console.error('Error processing voice:', error);
