@@ -32,7 +32,7 @@ export function startScheduler() {
     try {
       console.log('[PROACTIVE] Generating Morning Briefing...');
       const response = await generateMorningBriefing();
-      await bot.api.sendMessage(ALLOWED_USER_ID, `🌅 *Morning Briefing*\n\n${response}`, { parse_mode: 'Markdown' });
+      if (bot) await bot.api.sendMessage(ALLOWED_USER_ID, `🌅 *Morning Briefing*\n\n${response}`, { parse_mode: 'Markdown' });
     } catch (e) {
       console.error('Failed to run morning briefing', e);
     }
@@ -47,7 +47,7 @@ export function startScheduler() {
       const prompt = `[SYSTEM EVENT: EVENING RECAP] Generate an evening recap based on today's interactions:\n\n${recent}\n\nReview the interactions and use Google Tasks via Zapier to track and manage tasks, checking off completed ones and listing pending items for tomorrow.\nCRITICAL: If you notice any user preferences, recurring habits, or new behavioral patterns in today's interactions, USE the save_semantic_memory tool to save them for long-term storage.\nDo not explain that you are doing this, just deliver a friendly evening wrap-up.`;
       
       const response = await generateResponse(prompt);
-      await bot.api.sendMessage(ALLOWED_USER_ID, `🌙 *Evening Recap*\n\n${response}`, { parse_mode: 'Markdown' });
+      if (bot) await bot.api.sendMessage(ALLOWED_USER_ID, `🌙 *Evening Recap*\n\n${response}`, { parse_mode: 'Markdown' });
     } catch (e) {
       console.error('Failed to run evening recap', e);
     }

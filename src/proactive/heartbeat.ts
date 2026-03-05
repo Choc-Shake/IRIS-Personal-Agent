@@ -18,7 +18,7 @@ export function startHeartbeat() {
       const response = await generateResponse(prompt);
       
       if (!response.includes('NOTHING_URGENT')) {
-          await bot.api.sendMessage(ALLOWED_USER_ID, `🔔 *IRIS Alert*\n\n${response}`, { parse_mode: 'Markdown' });
+          if (bot) await bot.api.sendMessage(ALLOWED_USER_ID, `🔔 *IRIS Alert*\n\n${response}`, { parse_mode: 'Markdown' });
       } else {
           console.log('[PROACTIVE] Heartbeat checked. Nothing urgent.');
       }
