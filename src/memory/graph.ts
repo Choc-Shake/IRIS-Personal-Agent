@@ -5,7 +5,14 @@
 
 import { Pinecone } from '@pinecone-database/pinecone';
 
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY || '' });
+let pc: Pinecone | null = null;
+function getPineconeClient() {
+  if (pc) return pc;
+  if (!process.env.PINECONE_API_KEY) return null;
+  pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+  return pc;
+}
+
 const indexName = 'iris';
 
 // ─── Stop Words ───────────────────────────────────────────────────────────────
@@ -80,7 +87,12 @@ export async function generateGraphData(limit: number = 100): Promise<GraphData>
   }
 
   try {
-    const index = pc.index(indexName);
+    const client = getPineconeClient();
+    if (!client) {
+      console.warn('[GRAPH] Pinecone client failed to initialize. Returning empty graph.');
+      return { nodes: [], links: [] };
+    }
+    const index = client.index(indexName);
 
     // Step 1: List up to `limit` vector IDs
     const listResult = await index.listPaginated({ limit });
