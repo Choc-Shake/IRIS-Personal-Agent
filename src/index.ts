@@ -34,7 +34,11 @@ app.get('/api/logs', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Send an immediate connection confirmation
+  res.write(`data: ${JSON.stringify('[SYSTEM] Dashboard log stream connected.')}\n\n`);
 
   // Send recent history first
   const history = logger.getRecentLogs();
