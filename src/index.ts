@@ -36,6 +36,7 @@ app.get('/api/logs', (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
 
   // Send an immediate connection confirmation
   res.write(`data: ${JSON.stringify('[SYSTEM] Dashboard log stream connected.')}\n\n`);
