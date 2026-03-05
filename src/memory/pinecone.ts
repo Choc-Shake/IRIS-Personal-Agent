@@ -1,7 +1,14 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
 
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY || '' });
+let pc: Pinecone | null = null;
+function getPineconeClient() {
+  if (pc) return pc;
+  if (!process.env.PINECONE_API_KEY) return null;
+  pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+  return pc;
+}
+
 const indexName = 'iris';
 
 // We use Ollama for embeddings too
@@ -28,11 +35,13 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 export async function upsertSemanticMemory(text: string, metadata: any = {}) {
+  const client = getPineconeClient();
+  if (!client) return;
   if (!process.env.PINECONE_API_KEY) return;
   if (!text || text.trim() === '') return;
   
   try {
-    const index = pc.index(indexName);
+    const index = client.index(indexName);
     const embedding = await getEmbedding(text);
     
     if (!embedding || embedding.length === 0) {
@@ -78,9 +87,11 @@ export async function upsertSemanticMemory(text: string, metadata: any = {}) {
 }
 
 export async function searchSemanticMemory(query: string, topK: number = 3): Promise<string[]> {
+  const client = getPineconeClient();
+  if (!client) return [];
   if (!process.env.PINECONE_API_KEY) return [];
   try {
-    const index = pc.index(indexName);
+    const index = client.index(indexName);
     const queryEmbedding = await getEmbedding(query);
     if (!queryEmbedding || queryEmbedding.length === 0) {
       return [];
@@ -100,9 +111,11 @@ export async function searchSemanticMemory(query: string, topK: number = 3): Pro
 }
 
 export async function wipeSemanticMemory(): Promise<boolean> {
+  const client = getPineconeClient();
+  if (!client) return false;
   if (!process.env.PINECONE_API_KEY) return false;
   try {
-    const index = pc.index(indexName);
+    const index = client.index(indexName);
     await index.deleteAll();
     return true;
   } catch (e) {
