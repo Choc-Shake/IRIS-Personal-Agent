@@ -1299,8 +1299,8 @@ export default function App() {
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md">
-          <div className="glass-panel w-[500px] p-8 flex flex-col gap-6 animate-modal">
-            <div className="flex justify-between items-center border-b border-white/10 pb-4">
+          <div className="glass-panel w-[700px] max-h-[95vh] overflow-y-auto p-6 flex flex-col gap-5 animate-modal">
+            <div className="flex justify-between items-center border-b border-white/10 pb-4 shrink-0">
               <h2 className="text-lg font-bold text-white tracking-widest uppercase flex items-center gap-2">
                 <span className="material-symbols-outlined text-gold">settings</span>
                 System Settings
@@ -1309,7 +1309,7 @@ export default function App() {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 'OPENROUTER_API_KEY', 
                 'OPENROUTER_MODEL',
@@ -1322,14 +1322,14 @@ export default function App() {
                 const isPassword = ['OPENROUTER_API_KEY', 'TELEGRAM_BOT_TOKEN', 'PINECONE_API_KEY'].includes(key);
                 return (
                   <div key={key}>
-                    <label className="block text-xs font-bold text-gold/70 uppercase tracking-wider mb-2">{key.replace(/_/g, ' ')}</label>
+                    <label className="block text-xs font-bold text-gold/70 uppercase tracking-wider mb-1.5">{key.replace(/_/g, ' ')}</label>
                     <div className="relative flex items-center">
                       <input 
                         type={isPassword && !passwordVis[key] ? "password" : "text"} 
                         value={settingsState[key] || ''}
                         onChange={(e) => setSettingsState({ ...settingsState, [key]: e.target.value })}
                         disabled={settingsLoading}
-                        className={`w-full bg-black/40 border border-gold/10 rounded-xl p-3 ${isPassword ? 'pr-10' : ''} text-sm text-zinc-300 focus:outline-none focus:border-gold/30 focus:ring-1 focus:ring-gold/10 font-mono ${settingsLoading ? 'opacity-50' : ''}`} 
+                        className={`w-full bg-black/40 border border-gold/10 rounded-xl px-3 py-2.5 ${isPassword ? 'pr-10' : ''} text-sm text-zinc-300 focus:outline-none focus:border-gold/30 focus:ring-1 focus:ring-gold/10 font-mono ${settingsLoading ? 'opacity-50' : ''}`} 
                       />
                       {isPassword && (
                         <button 
@@ -1344,7 +1344,7 @@ export default function App() {
                 );
               })}
               <div>
-                <label className="block text-xs font-bold text-gold/70 uppercase tracking-wider mb-2">MEMORY_VISUALIZER_LIMIT</label>
+                <label className="block text-xs font-bold text-gold/70 uppercase tracking-wider mb-1.5">MEMORY_VISUALIZER_LIMIT</label>
                 <div className="flex items-center gap-4">
                   <input type="range" className="flex-1 accent-gold" min="20" max="500" step="10"
                     defaultValue={100}
@@ -1365,7 +1365,7 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-red-500/70 uppercase tracking-wider mb-2">Cognitive Memory Rebirth</label>
+                <label className="block text-xs font-bold text-red-500/70 uppercase tracking-wider mb-1.5">Cognitive Memory Rebirth</label>
                 <div className="flex items-center gap-4">
                   <button 
                     data-step="0"
@@ -1422,7 +1422,7 @@ export default function App() {
                 </div>
               </div>
               
-              <div className="pt-4 flex justify-end border-t border-white/10 mt-6 pt-6">
+              <div className="flex justify-end border-t border-white/10 mt-4 pt-4 shrink-0">
                 <button 
                   onClick={async (e) => {
                     const btn = e.currentTarget;
