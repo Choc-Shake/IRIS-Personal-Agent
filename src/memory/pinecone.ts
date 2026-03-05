@@ -56,12 +56,12 @@ export async function upsertSemanticMemory(text: string, metadata: any = {}) {
         topK: 1,
         includeMetadata: true
       });
-      // A score of > 0.88 means it's fundamentally the exact same semantic fact
+      // A score of >= 0.98 means it's fundamentally the exact same semantic fact
       if (dupCheck.matches && dupCheck.matches.length > 0) {
         const topMatch = dupCheck.matches[0];
-        if (topMatch.score && topMatch.score > 0.88) {
+        if (topMatch.score && topMatch.score >= 0.98) {
           console.log(`[PINECONE DEDUPLICATION] Skipped saving exact duplicate memory (Score: ${topMatch.score.toFixed(3)}). Fact: "${text}" matched existing: "${topMatch.metadata?.text}"`);
-          return;
+          throw new Error("DUPLICATE: This memory is already stored.");
         }
       }
     } catch (dupErr) {

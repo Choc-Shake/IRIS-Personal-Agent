@@ -206,43 +206,38 @@ export async function startAllMCPServers() {
 }
 
 export async function getAllLoadedMCPTools(allowedTools?: string[]) {
-  // Return cached tools if available and no specific filter is requested
-  if (cachedTools !== null && !allowedTools) {
-    return cachedTools;
-  }
-
-  const allTools: any[] = [];
-  for (const [serverName, client] of Object.entries(mcpClients)) {
-    try {
-      const response = await client.listTools();
-      for (const tool of response.tools) {
-        const fullToolName = `${serverName}__${tool.name}`;
-        
-        // If allowedTools is provided, only include tools that match by exact name or prefix
-        if (allowedTools && !allowedTools.some(allowed => fullToolName.startsWith(allowed))) {
-          continue;
+  // If cache is empty, fetch from all servers first to populate it
+  if (cachedTools === null) {
+    const allTools: any[] = [];
+    for (const [serverName, client] of Object.entries(mcpClients)) {
+      try {
+        const response = await client.listTools();
+        for (const tool of response.tools) {
+          const fullToolName = `${serverName}__${tool.name}`;
+          allTools.push({
+            type: 'function',
+            function: {
+              name: fullToolName,
+              description: tool.description || `Tool ${tool.name} from ${serverName}`,
+              parameters: simplifySchema(tool.inputSchema)
+            }
+          });
         }
-
-        allTools.push({
-          type: 'function',
-          function: {
-            name: fullToolName,
-            description: tool.description || `Tool ${tool.name} from ${serverName}`,
-            parameters: simplifySchema(tool.inputSchema)
-          }
-        });
+      } catch (error) {
+        console.error(`Failed to list tools for ${serverName}:`, error);
       }
-    } catch (error) {
-      console.error(`Failed to list tools for ${serverName}:`, error);
     }
-  }
-
-  // Only cache if we didn't filter
-  if (!allowedTools) {
     cachedTools = allTools;
   }
-  
-  return allTools;
+
+  // If a filter is applied, filter directly from the cache instantly
+  if (allowedTools && allowedTools.length > 0) {
+    return cachedTools.filter(tool => 
+      allowedTools.some(allowed => tool.function.name.startsWith(allowed))
+    );
+  }
+
+  return cachedTools;
 }
 
 export async function callMCPTool(serverName: string, toolName: string, args: any) {
