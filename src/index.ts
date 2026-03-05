@@ -49,7 +49,16 @@ app.get('/api/logs', (req, res) => {
   };
 
   logger.on('log', onLog);
-  req.on('close', () => logger.off('log', onLog));
+
+  // Send heartbeat every 15s to keep the SSE connection alive over proxies/Tailscale
+  const heartbeat = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 15000);
+
+  req.on('close', () => {
+    logger.off('log', onLog);
+    clearInterval(heartbeat);
+  });
 });
 
 // ─── 2. MCP Server Health & Control ─────────────────────────────────────────

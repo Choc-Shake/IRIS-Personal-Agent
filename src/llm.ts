@@ -168,7 +168,12 @@ ${memoryContext}`;
 
   // Force OpenRouter use
   const openaiClient = cloudOpenai;
-  const modelName = process.env.OPENROUTER_MODEL || 'openrouter/free';
+  let modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+
+  // Sanitize: strip accidental 'openrouter/' prefix if it's prepended to a provider/model path
+  if (modelName.startsWith('openrouter/') && modelName.includes('/', 11)) {
+    modelName = modelName.replace('openrouter/', '');
+  }
 
   console.log(`[LLM] Executing with Model: ${modelName} (cloud)`);
 
