@@ -44,7 +44,7 @@ RUN npm ci --omit=dev
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist/
-COPY --from=builder /app/public ./public/
+COPY --from=builder ["/app/IRIS Frontend Design/dist", "./public/"]
 
 # Copy config files
 COPY mcp_config.docker.json ./mcp_config.json
