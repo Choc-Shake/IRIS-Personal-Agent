@@ -168,10 +168,11 @@ ${memoryContext}`;
 
   // Force OpenRouter use
   const openaiClient = cloudOpenai;
-  let modelName = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+  let modelName = process.env.OPENROUTER_MODEL || 'openrouter/auto';
 
-  // Sanitize: strip accidental 'openrouter/' prefix if it's prepended to a provider/model path
-  if (modelName.startsWith('openrouter/') && modelName.includes('/', 11)) {
+  // Sanitize: OpenRouter model IDs should NOT include the "openrouter/" prefix itself.
+  // If the user enters "openrouter/google/gemini-..." it will fail with 404.
+  if (modelName.startsWith('openrouter/') && modelName.split('/').length > 2) {
     modelName = modelName.replace('openrouter/', '');
   }
 
