@@ -13,7 +13,7 @@ export function startHeartbeat() {
     try {
       console.log('[PROACTIVE] Hourly heartbeat running...');
       // We instruct the LLM to output exactly "NOTHING_URGENT" if there's nothing to say.
-      const prompt = `[SYSTEM EVENT: HOURLY HEARTBEAT] Please check my calendar, emails, or recent memory for anything immediately urgent (e.g., a meeting in the next hour or an urgent unread email). If there is NOTHING noteworthy, reply EXACTLY with the word "NOTHING_URGENT" and do not say anything else. If there is something important, write a brief, proactive message warning me.`;
+      const prompt = `[SYSTEM EVENT: HOURLY HEARTBEAT] Please check my calendar, emails, or recent memory for anything immediately urgent (e.g., a meeting in the next hour or an urgent unread email). If there is NOTHING noteworthy, reply EXACTLY with the word "NOTHING_URGENT" and do not say anything else. If there is something important, write a brief, proactive message warning me with a few key details.`;
       
       const response = await generateResponse(prompt);
       
