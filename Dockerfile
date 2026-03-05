@@ -1,20 +1,26 @@
 # ══════════════════════════════════════════════════════════════════════════════
 # IRIS — Multi-Stage Production Dockerfile
-# Stage 1: Build the React dashboard frontend
-# Stage 2: Production runtime with Node.js + Python (for MCP servers)
+# Stage 1: Build Frontend & Backend
+# Stage 2: Production Runtime (Node.js + Python for MCP)
 # ══════════════════════════════════════════════════════════════════════════════
 
-# ── Stage 1: Build Frontend ──────────────────────────────────────────────────
-FROM node:20-slim AS frontend-build
+# ── Stage 1: Build ───────────────────────────────────────────────────────────
+FROM node:20-slim AS builder
 
-WORKDIR /frontend
+WORKDIR /app
 
-# Copy frontend package files for layer caching
-COPY "IRIS Frontend Design/package.json" "IRIS Frontend Design/package-lock.json" ./
-RUN npm ci
+# Copy package files
+COPY package*.json ./
+COPY ["IRIS Frontend Design/package.json", "IRIS Frontend Design/package-lock.json", "./IRIS Frontend Design/"]
 
-# Copy frontend source and build
-COPY "IRIS Frontend Design/" ./
+# Install all dependencies (including dev for build)
+RUN npm install
+RUN cd "IRIS Frontend Design" && npm install
+
+# Copy source code
+COPY . .
+
+# Build both Backend (tsc) and Frontend (vite)
 RUN npm run build
 
 # ── Stage 2: Production Runtime ──────────────────────────────────────────────
@@ -32,30 +38,23 @@ RUN pip3 install --break-system-packages \
 
 WORKDIR /app
 
-# Copy backend package files for layer caching
-COPY package.json package-lock.json ./
+# Copy production dependencies only
+COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Copy backend source code
-COPY src/ ./src/
-COPY tsconfig.json ./
+# Copy built assets from builder stage
+COPY --from=builder /app/dist ./dist/
+COPY --from=builder /app/public ./public/
 
-# Copy built frontend into the static-serve directory
-COPY --from=frontend-build /frontend/dist ./public/
-
-# Copy config files (defaults — overridden via volume mounts in docker-compose)
+# Copy config files
 COPY mcp_config.docker.json ./mcp_config.json
 COPY .agent/ ./.agent/
 
-# Create data directory for SQLite persistence
-RUN mkdir -p /app/data
+# Ensure necessary directories exist for volume mounts
+RUN mkdir -p /app/data /app/.agent
 
 # Expose dashboard port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD node -e "fetch('http://localhost:3000/api/agent/status').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
-
-# Start IRIS
-CMD ["npm", "start"]
+# Start IRIS (using node directly on compiled JS)
+CMD ["node", "dist/index.js"]

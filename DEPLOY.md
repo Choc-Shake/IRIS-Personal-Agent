@@ -19,39 +19,25 @@ git clone <your-repo-url> iris
 cd iris
 ```
 
-### 2. Configure Environment
+### 2. Prepare Placeholder Config
+Docker needs these files to exist before it can mount them:
 ```bash
-# Create your .env file from the template
-cp .env.example .env
-nano .env
+touch .env
+mkdir -p .agent && touch .agent/persona.md
 ```
 
-Fill in your API keys:
-```
-TELEGRAM_BOT_TOKEN=<your-telegram-bot-token>
-TELEGRAM_USER_ID=<your-telegram-user-id>
-OPENROUTER_API_KEY=<your-openrouter-key>
-PINECONE_API_KEY=<your-pinecone-key>
-GROQ_API_KEY=<your-groq-key>
-TIMEZONE=America/Edmonton
-LLM_ROUTING_MODE=CLOUD_ONLY
-OPENROUTER_MODEL=openrouter/free
-```
-
-### 3. Configure Persona
-```bash
-# Create your persona file
-mkdir -p .agent
-nano .agent/persona.md
-```
-
-### 4. Build & Launch
+### 3. Build & Launch
 ```bash
 docker compose up -d --build
 ```
+First build takes ~3-5 minutes (compiles TypeScript backend & Vite frontend).
 
-First build takes ~3-5 minutes (downloads Node.js, Python, builds frontend).
-Subsequent builds use cached layers and are much faster.
+### 4. Configure via Dashboard 👁️
+You don't need to edit files in the terminal! Just open the dashboard and use the UI:
+1.  **Open**: `http://<your-server-ip>:3000`
+2.  **Settings**: Click the ⚙️ icon to paste your API keys (Telegram, OpenRouter, etc.).
+3.  **Persona**: Click the 🎭 icon to write your IRIS persona.
+4.  **Restart**: Click "Offline/Online" to reboot IRIS with the new keys.
 
 ### 5. Verify
 ```bash
