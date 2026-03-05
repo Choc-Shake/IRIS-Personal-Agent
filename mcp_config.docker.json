@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "notebooklm": {
+      "command": "notebooklm-mcp",
+      "args": [],
+      "disabled": false
+    },
+    "pinecone": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pinecone-database/mcp"
+      ],
+      "env": {
+        "PINECONE_API_KEY": "pcsk_4uZoq3_HzPnCfc2Tbf88seXJPJwsBLFJkjdKwANZMUPSJd2LJEX4bpLZgbFfDgY7fZD1AM"
+      },
+      "disabled": false
+    },
+    "zapier": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.zapier.com/api/v1/connect?token=MmU2NWY2ODUtZjU5Zi00YzAyLWJjMTItNDkxZmQ3YzMzZWUzOm14bnNBbWpQai9zOXJNTFZjUU5ERENpSWRhdE9OSEpwOUh5ays4QlZDV0U9"
+      ],
+      "disabled": false
+    },
+    "duckduckgo_search": {
+      "command": "duckduckgo-mcp-server",
+      "args": [],
+      "disabled": false
+    }
+  }
+}

@@ -1,0 +1,33 @@
+# Dependencies (reinstalled in Docker)
+node_modules/
+IRIS Frontend Design/node_modules/
+dashboard/node_modules/
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Environment (mounted as volume, never baked in)
+.env
+.env.*
+!.env.example
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.gemini/
+
+# OS junk
+.DS_Store
+*.log
+Thumbs.db
+
+# Data (mounted as volume for persistence)
+data/
+
+# Dev-only files
+tests/
+*.bat
+inspect-zapier.ts

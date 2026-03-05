@@ -1,140 +1,76 @@
 # 👁️ IRIS: Intelligent Response and Insight System
 
-IRIS is a sophisticated, deterministic, and highly-efficient AI agentic bot system designed for personal assistance and automation. Built with Node.js and TypeScript, IRIS leverages the Model Context Protocol (MCP) to interact with various tools and services, providing a seamless and powerful user experience through Telegram.
+> *The deterministic, high-efficiency personal agentic backbone.*
+
+IRIS is a sophisticated AI agent system built for extreme performance, reliability, and modularity. Powered by the **B.L.A.S.T. Architecture**, IRIS seamlessly bridges the gap between conversational AI and practical automation.
+
+---
+
+## ⚡ B.L.A.S.T. Architecture
+IRIS is engineered for speed and precision using five core pillars:
+- **B**ehavioral Logic: Deterministic personality via `.agent/persona.md`.
+- **L**atency Awareness: Built-in `[PERF]` tracking and payload compression.
+- **A**gentic Nesting: Self-healing loops and recursive tool discovery.
+- **S**chema Simplification: Lightweight tool injection to crush token bloat.
+- **T**ool Isolation: Secure, modular MCP server execution.
 
 ---
 
 ## ✨ Key Features
 
-- 🛠️ **MCP Integration**: Dynamic tool loading and execution via the Model Context Protocol. Supports Zapier, Weather, Context7, and more.
-- 📁 **Memory System**: Persistent exact memory using SQLite (`better-sqlite3`) in **WAL Mode** for lightning-fast, parallel I/O.
-- 📡 **Telegram Interface**: Full-featured Telegram bot with **Real-Time Response Streaming** (watch IRIS type her answers live).
-- 🧬 **Local Semantic Memory**: Hybrid RAG architecture using **Ollama** (`nomic-embed-text`) for zero-latency semantic vectors instantly saved and recalled via Pinecone.
-- 🎭 **Personality Management**: Manage IRIS's "Soul" via `.agent/persona.md`. Seamlessly adjust her tone, style, and magnetism in plain markdown.
-- 🧩 **Intent Router**: Sub-millisecond keyword-based routing that filters 65+ MCP tools down to only what's needed, crushing token bloat.
-- 🧠 **Cloud LLM Native**: Optimized for high-performance cloud models via OpenRouter (Gemini, Qwen, etc.).
-- 🛡️ **B.L.A.S.T. Protocols**: Built on a highly-efficient, self-healing architecture:
-  - **B**ehavioral Logic
-  - **L**atency Awareness
-  - **A**gentic Nesting
-  - **S**chema Simplification
-  - **T**ool Isolation
+### 🖥️ Next-Gen Dashboard
+A premium, real-time control center built with React and Framer Motion.
+- **Live Terminal**: Integrated SSE log streamer with log virtualization.
+- **Native Chat**: Direct agent interaction with Markdown support and tab-to-autocomplete slash commands.
+- **Memory Visualizer**: A beautiful, interactive physics-based hub showing your agent's cognitive graph.
+- **System Health**: Real-time monitoring of MCP servers, latency, and daily request quotas.
+
+### 🧠 Cognitive Engine
+- **Hybrid Memory**: SQLite for exact history + Pinecone for long-term semantic RAG.
+- **Zero-Latency Routing**: Sub-millisecond intent routing filters 65+ tools down to exactly what's needed.
+- **Proactive Insights**: IRIS doesn't just respond; she thinks, saves memories, and recalls relevant context automatically.
+
+### 🔌 Model Context Protocol (MCP)
+IRIS is a first-class MCP citizen, connecting natively to:
+- **Zapier**: Automate Google Tasks, Calendar, Gmail, and 6000+ other apps.
+- **Documentation**: Direct access to local repositories or technical docs.
+- **Web Intelligence**: Real-time search and weather tracking.
 
 ---
 
-## 🏗️ Architecture (A.N.T.)
-
-IRIS follows the **Agentic, Nested, Task-oriented (A.N.T.)** structure:
-
-1.  **Orchestrator (`src/llm.ts`)**: The core execution loop that handles planning, tool selection, and stateful response generation with **Streaming support**.
-2.  **Persona Core (`.agent/persona.md`)**: Defines the "Soul" of IRIS—her tone, boundaries, and personality traits.
-3.  **Intent Router (`src/router.ts`)**: A zero-latency pre-flight layer that determines tool requirements before the LLM even starts thinking.
-4.  **MCP Layer (`src/mcp.ts`)**: Manages external server connections and dynamic tool schema injection.
-5.  **Memory Layer (`src/memory/`)**: Dual-layer persistence involving SQLite (Exact) and Pinecone/Ollama (Semantic RAG).
-6.  **UX Layer (`src/ux/`)**: Manages visual feedback, typing indicators, and real-time message editing.
+## 🚀 Speed & Optimization
+- **Backend Compression**: Gzip/Deflate middleware for lightning-fast graph and log transfers.
+- **DB Indexing**: Composite indices for instant metrics and history retrieval.
+- **DOM Virtualization**: "Sliding window" rendering ensures the UI stays buttery smooth even after 1000+ entries.
+- **WAL Mode**: SQLite Write-Ahead Logging for high-concurrency memory access.
 
 ---
 
-## ⚡ High-Performance Optimizations
+## 🛠️ Deployment & Hosting
 
-IRIS is built for speed, with several layers of optimization to ensure instant responses:
+### Windows / Local
+```bash
+npm install
+npm run dev
+```
 
-- **Database WAL Mode**: Uses SQLite's Write-Ahead Logging to prevent database locks and ensure parallel memory access.
-- **Background RAG Recall**: Automatically performs semantic searches in the background for every query, injecting context into the prompt without requiring LLM tool calls.
-- **Strict Tool Filtering**: Reduces the 65+ tool schema payload down to the bare essentials (or zero for chat), saving seconds of token-processing time.
-- **LLM Timers**: Built-in `[PERF]` metrics to monitor LLM network latency vs. local task processing time.
-- **Response Streaming**: Uses OpenRouter's streaming API to deliver chunks word-by-word, eliminating the perceived wait for long summaries.
+### CasaOS / Docker (Recommended)
+IRIS is production-ready for homeservers.
+1. Copy `.env.example` to `.env` and add your keys.
+2. Run `docker compose up -d --build`.
+3. Access your dashboard at `http://<tailscale-ip>:3000`.
 
----
-
-## 🚀 Tech Stack
-
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Bot Framework**: [grammY](https://grammy.dev/)
-- **Database**: [SQLite](https://sqlite.org/) via `better-sqlite3`
-- **LLM API**: [OpenRouter](https://openrouter.ai/)
-- **Tools**: [MCP SDK](https://modelcontextprotocol.io/)
-- **Styling/UX**: [Tailwind CSS](https://tailwindcss.com/) (Web Health Check), [Lucide React](https://lucide.dev/)
-
----
-
-## 🛠️ Prerequisites
-
-- **Node.js** (v18+)
-- **NPM** or **PNPM**
-- **Telegram Bot Token** (from @BotFather)
-- **OpenRouter API Key**
-- **Ollama** (Running locally for `nomic-embed-text` embeddings)
-- **Pinecone API Key**
-
----
-
-## ⚙️ Setup & Configuration
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/IRIS.git
-   cd IRIS
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**:
-   Copy the example environment file and fill in your keys:
-   ```bash
-   cp .env.example .env
-   ```
-   Required variables:
-   - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token.
-   - `TELEGRAM_USER_ID`: Your Telegram ID (for whitelisting).
-   - `OPENROUTER_API_KEY`: Your OpenRouter API key.
-   - `OPENROUTER_MODEL`: e.g., `google/gemini-2.0-flash-exp:free`
-
-4. **MCP Configuration**:
-   Update `mcp_config.json` with your desired MCP servers (e.g., Google Calendar, Weather, Zapier).
-
----
-
-## 🏃 Running the Project
-
-- **Development Mode**:
-  ```bash
-  npm run dev
-  ```
-- **Build & Start**:
-  ```bash
-  npm run build
-  npm start
-  ```
+See [DEPLOY.md](DEPLOY.md) for the full guide.
 
 ---
 
 ## 📂 Project Structure
-
-```text
-IRIS/
-├── .agent/              # Agent skills, protocols, and personality
-│   ├── persona.md       # Manage IRIS's "Soul" (tone/identity)
-│   └── skills/          # MCP skill definitions
-├── data/                # Memory databases and temporary files
-├── src/
-│   ├── commands/        # Telegram slash commands
-│   ├── memory/          # SQLite management
-│   ├── ux/              # Visual feedback and typing indicators
-│   ├── voice/           # Transcription logic
-│   ├── bot.ts           # Telegram bot initialization
-│   ├── index.ts         # Entry point and health server
-│   ├── llm.ts           # Core execution loop
-│   └── mcp.ts           # MCP server management
-└── mcp_config.json      # MCP server definitions
-```
+- `.agent/`: Personality, skills, and cognitive constraints.
+- `src/`: Core TypeScript logic (LLM loops, MCP client, routers).
+- `IRIS Frontend Design/`: The high-performance React dashboard.
+- `data/`: Persistent SQLite & backup storage.
 
 ---
 
 ## 📝 License
-
-Private / MIT (Optional)
+Copyright © 2026. Built with precision for the modern agentic era.
