@@ -1,0 +1,5 @@
+{
+  "name": "IRIS Personal AI Agent",
+  "description": "A frontend UI dashboard for the IRIS personal AI agent, featuring system diagnostics, memory visualization, and cluster health monitoring.",
+  "requestFramePermissions": []
+}

@@ -40,6 +40,26 @@ export async function upsertSemanticMemory(text: string, metadata: any = {}) {
       return;
     }
 
+    // --- SEMANTIC DEDUPLICATION PHASE ---
+    try {
+      const dupCheck = await index.query({
+        vector: embedding,
+        topK: 1,
+        includeMetadata: true
+      });
+      // A score of > 0.88 means it's fundamentally the exact same semantic fact
+      if (dupCheck.matches && dupCheck.matches.length > 0) {
+        const topMatch = dupCheck.matches[0];
+        if (topMatch.score && topMatch.score > 0.88) {
+          console.log(`[PINECONE DEDUPLICATION] Skipped saving exact duplicate memory (Score: ${topMatch.score.toFixed(3)}). Fact: "${text}" matched existing: "${topMatch.metadata?.text}"`);
+          return;
+        }
+      }
+    } catch (dupErr) {
+      console.warn('Pinecone deduplication check failed, proceeding to insert anyway:', dupErr);
+    }
+    // ------------------------------------
+
     const id = `mem_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     
     await index.upsert({
@@ -51,6 +71,7 @@ export async function upsertSemanticMemory(text: string, metadata: any = {}) {
         }
       ]
     });
+    console.log(`[PINECONE] Saved new long-term semantic memory: "${text}"`);
   } catch (e) {
     console.error('Pinecone upsert error (ensure index exists):', e);
   }
@@ -75,5 +96,17 @@ export async function searchSemanticMemory(query: string, topK: number = 3): Pro
   } catch (e) {
     console.error('Pinecone search error:', e);
     return [];
+  }
+}
+
+export async function wipeSemanticMemory(): Promise<boolean> {
+  if (!process.env.PINECONE_API_KEY) return false;
+  try {
+    const index = pc.index(indexName);
+    await index.deleteAll();
+    return true;
+  } catch (e) {
+    console.error('Pinecone wipe error:', e);
+    return false;
   }
 }

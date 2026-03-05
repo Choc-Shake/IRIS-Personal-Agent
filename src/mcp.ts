@@ -5,6 +5,7 @@ import path from 'path';
 
 export const mcpClients: Record<string, Client> = {};
 export const mcpServerConfigs: Record<string, any> = {};
+export let fullMcpConfig: Record<string, any> = {};
 
 let cachedTools: any[] | null = null;
 
@@ -68,12 +69,20 @@ function simplifySchema(schema: any): any {
   return simplified;
 }
 
+let isWatching = false;
+
 export function loadMCPConfigs() {
   const configPath = path.join(process.cwd(), 'mcp_config.json');
   if (fs.existsSync(configPath)) {
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       const servers = config.mcpServers || {};
+      
+      // Clear existing config keys, we'll refill them
+      for (const key of Object.keys(mcpServerConfigs)) {
+        delete mcpServerConfigs[key];
+      }
+      fullMcpConfig = servers;
       
       // Only load servers that are not explicitly disabled
       for (const [name, serverConfig] of Object.entries(servers)) {
@@ -85,11 +94,47 @@ export function loadMCPConfigs() {
       }
       
       console.log(`Loaded ${Object.keys(mcpServerConfigs).length} active MCP server configurations.`);
+
+      if (!isWatching) {
+        isWatching = true;
+        fs.watchFile(configPath, { interval: 2000 }, async (curr, prev) => {
+          if (curr.mtime > prev.mtime) {
+            console.log('[MCP] Configuration change detected. Hot reloading servers...');
+            await hotReloadMCPServers();
+          }
+        });
+      }
+
     } catch (e) {
       console.error('Error reading mcp_config.json:', e);
     }
   } else {
     console.log('No mcp_config.json found.');
+  }
+}
+
+export async function hotReloadMCPServers() {
+  const oldActive = new Set(Object.keys(mcpClients));
+  
+  // Reload configs into memory
+  loadMCPConfigs();
+  
+  const newActive = new Set(Object.keys(mcpServerConfigs));
+
+  // Stop servers that are running but no longer in the active config
+  for (const name of oldActive) {
+    if (!newActive.has(name)) {
+      console.log(`[MCP Hot Reload] Stopping removed/disabled server: ${name}`);
+      await stopMCPServer(name);
+    }
+  }
+
+  // Start servers that are in the active config but not currently running
+  for (const name of newActive) {
+    if (!mcpClients[name]) {
+      console.log(`[MCP Hot Reload] Starting new/enabled server: ${name}`);
+      startMCPServer(name).catch(e => console.error(`[MCP] Failed to auto-start ${name}:`, e));
+    }
   }
 }
 
@@ -122,6 +167,19 @@ export async function startMCPServer(serverName: string) {
     console.error(`Failed to connect to MCP server ${serverName}:`, error);
     throw error;
   }
+}
+
+export async function stopMCPServer(serverName: string) {
+  const client = mcpClients[serverName];
+  if (!client) return; // Already stopped
+  try {
+    await client.close();
+  } catch (e) {
+    // Ignore close errors
+  }
+  delete mcpClients[serverName];
+  cachedTools = null; // Invalidate cache
+  console.log(`Stopped MCP server: ${serverName}`);
 }
 
 export function getAvailableMCPServers() {

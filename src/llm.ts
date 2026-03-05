@@ -1,13 +1,20 @@
 import OpenAI from 'openai';
-import { addMessage, getRecentMessages } from './memory/sqlite.js';
+import { addMessage, getRecentMessages, logRequest } from './memory/sqlite.js';
 import { getAllLoadedMCPTools, callMCPTool, startMCPServer, mcpClients } from './mcp.js';
 import { getRequiredTools } from './router.js';
 import { upsertSemanticMemory, searchSemanticMemory } from './memory/pinecone.js';
 
+// Runtime reference to track latency for dashboard (avoids circular imports)
+let _setLastLatency: ((ms: number) => void) | null = null;
+export function registerLatencyHook(fn: (ms: number) => void) { _setLastLatency = fn; }
+
 import https from 'https';
 import http from 'http';
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs';
+
+let cachedPersona: string | null = null;
+export function updateCachedPersona(newPersona: string) { cachedPersona = newPersona; }
 
 // Helper function to wrap Promises with a timeout
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -45,13 +52,13 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'save_semantic_memory',
-      description: 'Save important facts, user preferences, or memories to long-term memory. USE THIS whenever the user asks you to remember something or provides a fact about themselves.',
+      description: 'CRITICAL: DO NOT use this tool for conversational filler ("I will do that", "Hello", "Goodbye", "Ok"). ONLY use this tool to save high-value, permanent factual data about the user. Examples of VALID uses: Names, relationships, locations, dates, core preferences, specific project details. If the input is not a long-term permanent fact, DO NOT use this tool.',
       parameters: {
         type: 'object',
         properties: {
           text: {
             type: 'string',
-            description: 'The fact or memory to save (e.g. "The user\'s name is Ishaan" or "Ishaan is working on a new game project")'
+            description: 'The explicit fact or memory to save (e.g. "The user\'s brother is named Alex" or "The user is allergic to peanuts"). MUST be a factual statement.'
           }
         },
         required: ['text'],
@@ -80,15 +87,19 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 ];
 
 function loadPersona(): string {
+  if (cachedPersona !== null) return cachedPersona;
+  
   try {
     const personaPath = path.join(process.cwd(), '.agent', 'persona.md');
     if (fs.existsSync(personaPath)) {
-      return fs.readFileSync(personaPath, 'utf-8');
+      cachedPersona = fs.readFileSync(personaPath, 'utf-8');
+      return cachedPersona;
     }
   } catch (err) {
     console.error('[PERSONA] Failed to load persona.md, using default.');
   }
-  return "You are IRIS (Intelligent Response and Insight System), a personal AI agent.";
+  cachedPersona = "You are IRIS (Intelligent Response and Insight System), a personal AI agent.";
+  return cachedPersona;
 }
 
 function getCurrentTime() {
@@ -186,6 +197,10 @@ ${memoryContext}`;
     // Call LLM
     try {
       const llmCallStart = Date.now();
+      
+      // Log the metric per actual request
+      logRequest('openrouter');
+      
       const stream: any = await withTimeout(
         openaiClient.chat.completions.create({
           ...requestPayload,
@@ -325,6 +340,7 @@ ${memoryContext}`;
         addMessage('assistant', finalContent);
         
         const totalDuration = Date.now() - startTime;
+        if (_setLastLatency) _setLastLatency(totalDuration);
         console.log(`[PERF] Total Generation Time: ${totalDuration}ms`);
         console.log(`[LLM] --- GENERATION FINISHED ---\n`);
 

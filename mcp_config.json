@@ -3,7 +3,6 @@
     "notebooklm": {
       "command": "C:\\Users\\dogki\\AppData\\Roaming\\Python\\Python314\\Scripts\\notebooklm-mcp.exe",
       "args": [],
-      "description": "Access NotebookLM for information retrieval and document analysis.",
       "disabled": false
     },
     "pinecone": {
@@ -15,8 +14,7 @@
       "env": {
         "PINECONE_API_KEY": "pcsk_4uZoq3_HzPnCfc2Tbf88seXJPJwsBLFJkjdKwANZMUPSJd2LJEX4bpLZgbFfDgY7fZD1AM"
       },
-      "description": "Search semantic memory and long-term storage of conversations.",
-      "disabled": true
+      "disabled": false
     },
     "zapier": {
       "command": "npx",
@@ -25,16 +23,11 @@
         "mcp-remote",
         "https://mcp.zapier.com/api/v1/connect?token=MmU2NWY2ODUtZjU5Zi00YzAyLWJjMTItNDkxZmQ3YzMzZWUzOm14bnNBbWpQai9zOXJNTFZjUU5ERENpSWRhdE9OSEpwOUh5ays4QlZDV0U9"
       ],
-      "description": "Access Google Calendar,  Gmail, and other Zapier-connected services for scheduling and communication.",
       "disabled": false
     },
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
-      "description": "Retrieve up-to-date documentation and code examples from technical resources.",
+    "duckduckgo_search": {
+      "command": "C:\\Users\\dogki\\AppData\\Roaming\\Python\\Python314\\Scripts\\duckduckgo-mcp-server.exe",
+      "args": [],
       "disabled": false
     }
   }

@@ -1,6 +1,7 @@
 import { Context } from 'grammy';
 import { mcpClients, mcpServerConfigs, getAvailableMCPServers } from '../mcp.js';
 import { clearMessages, getMessageCount } from '../memory/sqlite.js';
+import { generateMorningBriefing } from '../proactive/scheduler.js';
 
 /** /status - Show bot status, loaded MCP servers, model info */
 async function handleStatus(ctx: Context) {
@@ -29,15 +30,21 @@ async function handleStatus(ctx: Context) {
     ``,
     `📅 *Date:* ${now}`,
     `⏱ *Uptime:* ${hours}h ${minutes}m ${seconds}s`,
-    `🧠 *Model:* \`${model}\``,
+    `🧠 *Model:* \`${model.replace(/_/g, '\\_')}\``,
     `💬 *Messages in Memory:* ${msgCount}`,
     ``,
     `🔌 *MCP Servers (${loadedCount}/${totalConfigured}):*`,
     serverList,
   ].join('\n');
 
-  await ctx.reply(status, { parse_mode: 'Markdown' });
+  try {
+    await ctx.reply(status, { parse_mode: 'Markdown' });
+  } catch (err: any) {
+    console.warn('[BOT] Markdown reply failed, falling back to plain text:', err.message);
+    await ctx.reply(status.replace(/[*_`\[\]()]/g, ''));
+  }
 }
+
 
 /** /new - Clear conversation history and start fresh */
 async function handleNew(ctx: Context) {
@@ -95,6 +102,17 @@ async function handleUsage(ctx: Context) {
   await ctx.reply(usage, { parse_mode: 'Markdown' });
 }
 
+/** /brief - Generate a proactive morning briefing on demand */
+async function handleBrief(ctx: Context) {
+  const loadingMessage = await ctx.reply('⏳ *Generating briefing...* (This may take a moment to search the web and summarize your day)', { parse_mode: 'Markdown' });
+  try {
+    const response = await generateMorningBriefing();
+    await ctx.api.editMessageText(ctx.chat!.id, loadingMessage.message_id, `🌅 *Morning Briefing*\n\n${response}`, { parse_mode: 'Markdown' });
+  } catch (err: any) {
+    await ctx.api.editMessageText(ctx.chat!.id, loadingMessage.message_id, `❌ *Error generating briefing:* ${err.message}`, { parse_mode: 'Markdown' });
+  }
+}
+
 /**
  * Register all slash commands on the bot.
  * Returns a map of command names to handlers for use in bot.ts.
@@ -105,6 +123,7 @@ export const commands: Record<string, (ctx: Context) => Promise<void>> = {
   'compact': handleCompact,
   'model': handleModel,
   'usage': handleUsage,
+  'brief': handleBrief,
 };
 
 /** List of command descriptions for Telegram's command menu */
@@ -114,4 +133,5 @@ export const commandDescriptions = [
   { command: 'compact', description: 'Compress conversation context' },
   { command: 'model', description: 'Show or switch the active LLM model' },
   { command: 'usage', description: 'Show usage statistics' },
+  { command: 'brief', description: 'Generate a morning briefing on demand' },
 ];

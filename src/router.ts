@@ -55,6 +55,15 @@ export function getRequiredTools(userMessage: string): string[] | undefined {
   const tools: string[] = [];
   let intentDetected = false;
 
+  // Web Search Intent
+  if (msg.includes('search') || msg.includes('weather') || msg.includes('news') || msg.includes('web') || msg.includes('find') ||
+      msg.includes('who') || msg.includes('what') || msg.includes('where') || msg.includes('when') || msg.includes('why') || msg.includes('how') ||
+      msg.includes('happen') || msg.includes('latest') || msg.includes('current') || msg.includes('now') || msg.includes('info') ||
+      msg.includes('?') || msg.includes('tell me about')) {
+    tools.push('duckduckgo_search__');
+    intentDetected = true;
+  }
+
   // Calendar Intent
   if (msg.includes('calendar') || msg.includes('schedule') || msg.includes('meeting') || msg.includes('event')) {
     tools.push('zapier__google_calendar');
@@ -80,7 +89,7 @@ export function getRequiredTools(userMessage: string): string[] | undefined {
   }
 
   // Generic Zapier Fallback
-  if (msg.includes('zapier') || msg.includes('zap')) {
+  if (msg.includes('zapier') || msg.includes('zap') || msg.includes('task') || msg.includes('todo')) {
     tools.push('zapier__');
     intentDetected = true;
   }

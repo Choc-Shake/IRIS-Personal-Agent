@@ -1,0 +1,35 @@
+services:
+  iris:
+    build: .
+    container_name: iris-agent
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data          # Persist SQLite DB and audio files
+      - ./.agent:/app/.agent      # Persist persona.md
+      - ./.env:/app/.env          # Environment config
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+    depends_on:
+      - ollama
+    networks:
+      - iris-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: iris-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - iris-net
+
+volumes:
+  ollama-models:
+
+networks:
+  iris-net:
+    driver: bridge

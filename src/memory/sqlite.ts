@@ -45,6 +45,14 @@ function initDb() {
       INSERT INTO messages_fts(messages_fts, rowid, content) VALUES('delete', old.id, old.content);
       INSERT INTO messages_fts(rowid, content) VALUES (new.id, new.content);
     END;
+
+    CREATE TABLE IF NOT EXISTS metrics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_metrics_timestamp_type ON metrics(timestamp, type);
   `);
 
   // Safely add new columns for tool calls if they don't exist
@@ -88,6 +96,12 @@ export function getRecentMessages(limit: number = 20): any[] {
   });
 }
 
+export function getMessageRows(limit: number = 50): any[] {
+  const stmt = db.prepare('SELECT id, role, content, timestamp FROM messages ORDER BY id DESC LIMIT ?');
+  const rows = stmt.all(limit) as any[];
+  return rows.reverse();
+}
+
 export function searchMessages(query: string, limit: number = 5): any[] {
   const stmt = db.prepare(`
     SELECT m.role, m.content, m.timestamp
@@ -98,6 +112,30 @@ export function searchMessages(query: string, limit: number = 5): any[] {
     LIMIT ?
   `);
   return stmt.all(query, limit);
+}
+
+export function logRequest(type: string = 'openrouter') {
+  try {
+    const stmt = db.prepare('INSERT INTO metrics (type) VALUES (?)');
+    stmt.run(type);
+  } catch (e) {
+    console.error('Failed to log request metric:', e);
+  }
+}
+
+export function getDailyRequestCount(): number {
+  try {
+    const stmt = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM metrics 
+      WHERE date(timestamp) = date('now', 'localtime')
+    `);
+    const result = stmt.get() as { count: number };
+    return result ? result.count : 0;
+  } catch (e) {
+    console.error('Failed to get daily request count:', e);
+    return 0;
+  }
 }
 
 export function clearMessages() {
