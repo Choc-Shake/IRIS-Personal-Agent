@@ -1310,8 +1310,16 @@ export default function App() {
               </button>
             </div>
             <div className="space-y-4">
-              {['OPENROUTER_API_KEY', 'TELEGRAM_BOT_TOKEN', 'PINECONE_API_KEY', 'OLLAMA_BASE_URL'].map((key) => {
-                const isPassword = key !== 'OLLAMA_BASE_URL';
+              {[
+                'OPENROUTER_API_KEY', 
+                'OPENROUTER_MODEL',
+                'TELEGRAM_BOT_TOKEN', 
+                'TELEGRAM_USER_ID',
+                'PINECONE_API_KEY', 
+                'OLLAMA_BASE_URL',
+                'TIMEZONE'
+              ].map((key) => {
+                const isPassword = ['OPENROUTER_API_KEY', 'TELEGRAM_BOT_TOKEN', 'PINECONE_API_KEY'].includes(key);
                 return (
                   <div key={key}>
                     <label className="block text-xs font-bold text-gold/70 uppercase tracking-wider mb-2">{key.replace(/_/g, ' ')}</label>
