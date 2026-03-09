@@ -7,3 +7,7 @@ coverage/
 .env*
 !.env.example
 .agent/persona.md
+stop_iris.bat
+test_groq.js
+test_groq.ts
+tmp_test_pinecone.ts

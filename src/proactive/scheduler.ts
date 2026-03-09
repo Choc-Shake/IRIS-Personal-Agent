@@ -8,12 +8,11 @@ let eveningTask: cron.ScheduledTask;
 
 export const MORNING_BRIEFING_PROMPT = `[SYSTEM EVENT: MORNING BRIEFING] Generate a proactive morning briefing for the user. 
 CRITICAL: You MUST use the following tools:
-1. 'search_semantic_memory' to look up the user's personal interests, hobbies, or current projects.
-2. The web search tool to find the current weather and suggest clothing (e.g., wear a jacket).
-3. The web search tool to find top news headlines today that SPECIFICALLY relate to the user's interests or identity found in memory.
-4. Zapier to check their Google Calendar for today and tomorrow.
-5. Zapier to check their Google Tasks for today.
-6. Zapier to check their Gmail for today, return only the subject lines of the most important emails.
+1. The web search tool to find the current weather and suggest clothing (e.g., wear a jacket).
+2. The web search tool to find top news headlines today that SPECIFICALLY relate to the user's interests or identity found in memory.
+3. Zapier to check their Google Calendar for today and tomorrow.
+4. Zapier to check their Google Tasks for today.
+5. Zapier to check any unread emails in their Gmail for today, return only the subject lines of the most important emails.
 
 FORMATTING & SEARCH RULES:
 - SEARCH QUERIES: Use short, 2-3 word keyword queries for DuckDuckGo (e.g., "Bahrain news today" instead of "What is happening in Bahrain right now?") to avoid bot detection.
