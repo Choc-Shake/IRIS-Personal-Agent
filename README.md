@@ -1,29 +1,14 @@
-# 👁️ IRIS: Intelligent Response and Insight System
+# IRIS: Intelligent Response and Insight System
 
-> *The deterministic, high-efficiency personal agentic backbone.*
 
-IRIS is a sophisticated AI agent system built for extreme performance, reliability, and modularity. Powered by the **B.L.A.S.T. Architecture**, IRIS seamlessly bridges the gap between conversational AI and practical automation.
 
----
+> *Project temporarily on hold*
 
-## ⚡ B.L.A.S.T. Architecture
-IRIS is engineered for speed and precision using five core pillars:
-- **B**ehavioral Logic: Deterministic personality via `.agent/persona.md`.
-- **L**atency Awareness: Built-in `[PERF]` tracking and payload compression.
-- **A**gentic Nesting: Self-healing loops and recursive tool discovery.
-- **S**chema Simplification: Lightweight tool injection to crush token bloat.
-- **T**ool Isolation: Secure, modular MCP server execution.
-
+IRIS is a sophisticated AI agent system built for extreme performance, reliability, and modularity. IRIS bridges the gap between conversational AI and practical automation.
+The goal of this project is to learn how we can transition AI from underwhelming conversation bots into practical tools to better our lives.
 ---
 
 ## ✨ Key Features
-
-### 🖥️ Next-Gen Dashboard
-A premium, real-time control center built with React and Framer Motion.
-- **Live Terminal**: Integrated SSE log streamer with log virtualization.
-- **Native Chat**: Direct agent interaction with Markdown support and tab-to-autocomplete slash commands.
-- **Memory Visualizer**: A beautiful, interactive physics-based hub showing your agent's cognitive graph.
-- **System Health**: Real-time monitoring of MCP servers, latency, and daily request quotas.
 
 ### 🧠 Cognitive Engine
 - **Hybrid Memory**: SQLite for exact history + Pinecone for long-term semantic RAG.
@@ -45,6 +30,14 @@ IRIS is a first-class MCP citizen, connecting natively to:
 - **WAL Mode**: SQLite Write-Ahead Logging for high-concurrency memory access.
 
 ---
+
+### 🖥️ Next-Gen Dashboard (Work in Progress)
+A premium, real-time control center built with React and Framer Motion.
+- **Live Terminal**: Integrated SSE log streamer with log virtualization.
+- **Native Chat**: Direct agent interaction with Markdown support and tab-to-autocomplete slash commands.
+- **Memory Visualizer**: A beautiful, interactive physics-based hub showing your agent's cognitive graph.
+- **System Health**: Real-time monitoring of MCP servers, latency, and daily request quotas.
+
 
 ## 🛠️ Deployment & Hosting
 
