@@ -53,15 +53,6 @@ IRIS is a first-class MCP citizen, connecting natively to:
 npm install
 npm run dev
 ```
-
-### CasaOS / Docker (Recommended)
-IRIS is production-ready for homeservers.
-1. Copy `.env.example` to `.env` and add your keys.
-2. Run `docker compose up -d --build`.
-3. Access your dashboard at `http://<tailscale-ip>:3000`.
-
-See [DEPLOY.md](DEPLOY.md) for the full guide.
-
 ---
 
 ## 📂 Project Structure
